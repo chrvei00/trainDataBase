@@ -140,10 +140,6 @@ CREATE TABLE
         vognoppsett_id INTEGER NOT NULL,
         vogn_nummer INTEGER NOT NULL,
         plass_nummer INTEGER CHECK (plass_nummer >= 1),
-        er_soveplass INTEGER CHECK (
-            er_soveplass = 0
-            OR er_soveplass = 1
-        ),
         inndeling_nummer INTEGER CHECK (inndeling_nummer >= 1),
         PRIMARY KEY (vognoppsett_id, vogn_nummer, plass_nummer)
     );
@@ -168,7 +164,7 @@ CREATE TABLE
     Kunde (
         kunde_nummer INTEGER NOT NULL,
         navn TEXT NOT NULL,
-        epost TEXT,
-        mobilnummer INTEGER,
+        epost TEXT NOT NULL,
+        mobilnummer INTEGER NOT NULL,
         PRIMARY KEY (kunde_nummer)
     );
