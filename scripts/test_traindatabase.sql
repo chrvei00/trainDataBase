@@ -2,27 +2,12 @@
 INSERT INTO
     Jernbanestasjon (navn, moh)
 VALUES
-    ('Oslo S', 23);
-
-INSERT INTO
-    Jernbanestasjon (navn, moh)
-VALUES
-    ('Bergen stasjon', 3);
-
-INSERT INTO
-    Jernbanestasjon (navn, moh)
-VALUES
-    ('Trondheim stasjon', 2);
-
-INSERT INTO
-    Jernbanestasjon (navn, moh)
-VALUES
-    ('Stavanger stasjon', 7);
-
-INSERT INTO
-    Jernbanestasjon (navn, moh)
-VALUES
-    ('Drammen stasjon', 10);
+    ('Oslo S', 23),
+    ('Bergen stasjon', 3),
+    ('Trondheim stasjon', 2),
+    ('Stavanger stasjon', 7),
+    ('Drammen stasjon', 10),
+    ('Kristiansand stasjon', 1);
 
 /* Test Delstrekning */
 INSERT INTO
@@ -33,96 +18,16 @@ INSERT INTO
         antall_spor
     )
 VALUES
-    ('Oslo S', 'Drammen stasjon', 42, 2);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Drammen stasjon', 'Oslo S', 42, 2);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Bergen stasjon', 'Stavanger stasjon', 213, 1);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Stavanger stasjon', 'Bergen stasjon', 213, 1);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Trondheim stasjon', 'Oslo S', 500, 2);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Oslo S', 'Trondheim stasjon', 500, 2);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Stavanger stasjon', 'Trondheim stasjon', 800, 1);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Bergen stasjon', 'Drammen stasjon', 320, 1);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
-    ('Drammen stasjon', 'Bergen stasjon', 320, 1);
-
-INSERT INTO
-    Delstrekning (
-        startstasjon_navn,
-        endestasjon_navn,
-        lengde,
-        antall_spor
-    )
-VALUES
+    ('Oslo S', 'Drammen stasjon', 42, 2),
+    ('Drammen stasjon', 'Oslo S', 42, 2),
+    ('Bergen stasjon', 'Stavanger stasjon', 213, 1),
+    ('Stavanger stasjon', 'Bergen stasjon', 213, 1),
+    ('Trondheim stasjon', 'Oslo S', 500, 2),
+    ('Oslo S', 'Trondheim stasjon', 500, 2),
+    ('Stavanger stasjon', 'Trondheim stasjon', 800, 1),
+    ('Bergen stasjon', 'Drammen stasjon', 320, 1),
+    ('Drammen stasjon', 'Bergen stasjon', 320, 1),
+    ('Drammen stasjon', 'Kristiansand stasjon', 320, 1),
     ('Trondheim stasjon', 'Stavanger stasjon', 800, 1);
 
 /* Test Banestrekning */
@@ -175,12 +80,20 @@ VALUES
 
 /* Test Operatør */
 INSERT INTO
-    Operator (operator_navn, vogn_type)
+    Operator (operator_navn)
 VALUES
+    ('NSB'),
+    ('VY'),
+    ('YV');
+
+/* Test Operator_types */
+INSERT INTO
+    Operator_typer (operator_navn, vogn_type)
+VALUES
+    ('NSB', 'sitte'),
     ('NSB', 'sove'),
-    ('SJ Nattog', 'sove'),
-    ('SJ Nattog', 'sitte'),
-    ('Amtrak', 'sitte');
+    ('VY', 'sitte'),
+    ('YV', 'sove');
 
 /* Test Togrute */
 INSERT INTO
@@ -201,17 +114,17 @@ VALUES
     ),
     (
         2,
-        'SJ Nattåg',
-        'Stockholm central',
-        'Copenhagen central',
-        'Stockholm-Copenhagen'
+        'VY',
+        'Drammen stasjon',
+        'Kristiansand stasjon',
+        'Drammen-Kristiansand'
     ),
     (
         3,
-        'Amtrak',
-        'New York Penn Station',
-        'Chicago Union Station',
-        'Northeast Corridor'
+        'YV',
+        'Trondheim stasjon',
+        'Stavanger stasjon',
+        'Trondheim-Stavanger'
     );
 
 /* Test Togruteforekomst */
@@ -228,14 +141,11 @@ INSERT INTO
         ankomst_tid,
         avgang_tid,
         togrute_id,
-        jernbanestasjon_id
+        jernbanestasjon_navn
     )
 VALUES
-    ('08:00', '08:15', 1, 'Oslo'),
-    ('09:30', '09:45', 1, 'Gardermoen'),
-    ('11:00', '11:15', 1, 'Trondheim'),
-    ('14:00', '14:15', 2, 'Oslo'),
-    ('16:00', '16:15', 2, 'Gardermoen');
+    ('08:00', '08:15', 1, 'Oslo S'),
+    ('09:30', '09:45', 1, 'Drammen stasjon');
 
 /* Test Vognoppsett */
 INSERT INTO
@@ -290,13 +200,7 @@ VALUES
     (1, 'Ola Nordmann', 'ola@example.com', 12345678),
     (2, 'Kari Nordmann', 'kari@example.com', 87654321),
     (3, 'Per Hansen', 'per@example.com', 12345278),
-    (4, 'Lise Olsen', 'lise@example.com', 66665555),
-    (
-        5,
-        'Anders Johansen',
-        'anders@example.com',
-        13579024
-    );
+    (4, 'Lise Olsen', 'lise@example.com', 66665555);
 
 /* Test Kundeordre */
 INSERT INTO
@@ -317,70 +221,34 @@ VALUES
         '2023-03-15',
         1,
         'Oslo S',
-        'Voss stasjon'
-    );
-
-INSERT INTO
-    Kundeordre (
-        ordre_nummer,
-        kjop_datotid,
-        kunde_nummer,
-        togruteforekomst_dato,
-        togrute_id,
-        pastigningstasjon_navn,
-        avstigningstasjon_navn
-    )
-VALUES
+        'Trondheim stasjon'
+    ),
     (
         2,
         '2023-03-19 18:00:00',
         4,
-        '2023-03-20',
+        '2023-03-16',
         2,
         'Bergen stasjon',
-        'Steinkjer stasjon'
-    );
-
-INSERT INTO
-    Kundeordre (
-        ordre_nummer,
-        kjop_datotid,
-        kunde_nummer,
-        togruteforekomst_dato,
-        togrute_id,
-        pastigningstasjon_navn,
-        avstigningstasjon_navn
-    )
-VALUES
+        'Kristiansand stasjon'
+    ),
     (
         3,
         '2023-03-21 10:00:00',
         1,
-        '2023-03-22',
+        '2023-03-17',
         3,
         'Oslo S',
-        'Dombås stasjon'
-    );
-
-INSERT INTO
-    Kundeordre (
-        ordre_nummer,
-        kjop_datotid,
-        kunde_nummer,
-        togruteforekomst_dato,
-        togrute_id,
-        pastigningstasjon_navn,
-        avstigningstasjon_navn
-    )
-VALUES
+        'Bergen stasjon'
+    ),
     (
         4,
         '2023-03-24 16:30:00',
         2,
-        '2023-03-25',
-        4,
-        'Trondheim sentralstasjon',
-        'Voss stasjon'
+        '2023-03-15',
+        1,
+        'Trondheim stasjon',
+        'Oslo S'
     );
 
 /* Test Billett */
@@ -392,13 +260,13 @@ INSERT INTO
         ordre_nummer
     )
 VALUES
-    (1, 1, 1, 1),
+    (1, 1, 1, 2),
     (1, 1, 2, 1),
-    (2, 2, 3, 2),
-    (2, 2, 4, 2),
-    (3, 3, 5, 3),
-    (3, 3, 6, 3),
-    (4, 4, 7, 4),
-    (4, 4, 8, 4),
-    (5, 5, 9, 5),
-    (5, 5, 10, 5);
+    (1, 1, 3, 3),
+    (1, 1, 4, 2),
+    (1, 1, 5, 2),
+    (1, 2, 1, 2),
+    (1, 2, 2, 1),
+    (1, 2, 3, 4),
+    (1, 2, 4, 2),
+    (1, 2, 5, 3);
