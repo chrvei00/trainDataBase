@@ -200,7 +200,8 @@ VALUES
     (1, 'Ola Nordmann', 'ola@example.com', 12345678),
     (2, 'Kari Nordmann', 'kari@example.com', 87654321),
     (3, 'Per Hansen', 'per@example.com', 12345278),
-    (4, 'Lise Olsen', 'lise@example.com', 66665555);
+    (4, 'Lise Olsen', 'lise@example.com', 66665555),
+    (5, 'Lise Olsen', 'lise@example2.com', 66665555);
 
 /* Test Kundeordre */
 INSERT INTO

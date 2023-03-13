@@ -173,6 +173,6 @@ CREATE TABLE
         kunde_nummer INTEGER NOT NULL,
         navn TEXT NOT NULL,
         epost TEXT NOT NULL UNIQUE,
-        mobilnummer INTEGER NOT NULL UNIQUE,
+        mobilnummer INTEGER NOT NULL,
         PRIMARY KEY (kunde_nummer)
     );
