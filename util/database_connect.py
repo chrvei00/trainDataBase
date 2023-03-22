@@ -1,5 +1,5 @@
 import sqlite3
-import util.database_methods as dbm
+import util.database_functions as dbf
 
 def init_database(conn, script_path):
     try:
@@ -31,12 +31,12 @@ def insert_defaultvalues(conn, script_path):
         vogner = [
             ("sitte", 1, 1, 3, 4),
             ("sitte", 2, 1, 3, 4),
-            ("sitte", 3, 2, 3, 4),
-            ("sove", 4, 2, 4, 2),
-            ("sitte", 5, 3, 3, 4)
+            ("sitte", 1, 2, 3, 4),
+            ("sove", 2, 2, 4, 2),
+            ("sitte", 1, 3, 3, 4)
         ]
         for vogn in vogner:
-            dbm.create_vogn_and_plasser(conn, *vogn)
+            dbf.create_vogn_and_plasser(conn, *vogn)
     
     except sqlite3.Error as e:
         print(e)

@@ -57,10 +57,13 @@ CREATE TABLE
         startstasjon TEXT NOT NULL,
         endestasjon TEXT NOT NULL,
         banestrekning_navn TEXT NOT NULL,
+        togrute_navn TEXT NOT NULL,
+        vognoppsett_id INTEGER NOT NULL,
         FOREIGN KEY (operator_navn) REFERENCES Operator (operator_navn) ON UPDATE CASCADE ON DELETE CASCADE,
         FOREIGN KEY (startstasjon) REFERENCES Jernbanestasjon (navn) ON UPDATE CASCADE ON DELETE CASCADE,
         FOREIGN KEY (endestasjon) REFERENCES Jernbanestasjon (navn) ON UPDATE CASCADE ON DELETE CASCADE,
         FOREIGN KEY (banestrekning_navn) REFERENCES Banestrekning (navn) ON UPDATE CASCADE ON DELETE CASCADE,
+        FOREIGN KEY (vognoppsett_id) REFERENCES Vognoppsett (vognoppsett_id) ON UPDATE CASCADE ON DELETE CASCADE,
         PRIMARY KEY (togrute_id)
     );
 

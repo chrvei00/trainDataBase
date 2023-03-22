@@ -67,6 +67,14 @@ VALUES
     ('SJ', 'sitte'),
     ('SJ', 'sove');
 
+/* Vognoppsett */
+INSERT INTO
+    Vognoppsett (vognoppsett_id)
+VALUES
+    (1),
+    (2),
+    (3);
+
 /* Togruter */
 INSERT INTO
     Togrute (
@@ -74,17 +82,37 @@ INSERT INTO
         operator_navn,
         startstasjon,
         endestasjon,
-        banestrekning_navn
+        banestrekning_navn,
+        togrute_navn,
+        vognoppsett_id
     )
 VALUES
-    (1, 'SJ', 'Trondheim S', 'Bodø', 'Nordlandsbanen'),
-    (2, 'SJ', 'Trondheim S', 'Bodø', 'Nordlandsbanen'),
+    (
+        1,
+        'SJ',
+        'Trondheim S',
+        'Bodø',
+        'Nordlandsbanen',
+        'Dagtog',
+        1
+    ),
+    (
+        2,
+        'SJ',
+        'Trondheim S',
+        'Bodø',
+        'Nordlandsbanen',
+        'Nattog',
+        2
+    ),
     (
         3,
         'SJ',
         "Mo i Rana",
         "Trondheim S",
-        "Nordlandsbanen"
+        "Nordlandsbanen",
+        "Morgentog",
+        3
     );
 
 --
@@ -128,11 +156,3 @@ VALUES
     ('09:04', '09:14', 3, 'Mosjøen'),
     ('12:21', '12:31', 3, 'Steinkjer'),
     ('14:03', '14:13', 3, 'Trondheim S');
-
-/* Vognoppsett */
-INSERT INTO
-    Vognoppsett (vognoppsett_id)
-VALUES
-    (1),
-    (2),
-    (3);
