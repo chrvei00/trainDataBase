@@ -1,12 +1,8 @@
 import sqlite3
 import datetime
-import math
 import pandas as pd
 import util.utils as utils
 from tabulate import tabulate
-
-
-
 
 def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato):
     try:
@@ -19,10 +15,13 @@ def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato
         
         togruter = utils.get_containing_togruter(conn, start_stasjon, ende_stasjon)
         togruter = list(filter(lambda x: x[1] == dato or x[1] == next_date, togruter))
-      
+
+        togruter = list(map(
+            lambda x: [*x, get_rutetid_by_togrute_and_stasjon(conn, x[0], start_stasjon)], togruter))
+
 
         #Sorterer togruter etter avgangstid fra startstasjon
-        togruter.sort(key=lambda x: get_rutetid_by_togrute_and_stasjon(conn, x[0], start_stasjon))
+        togruter.sort(key=lambda x: x[6])
         togruter.sort(key=lambda x: x[1])
 
         if togruter == []:
@@ -41,10 +40,9 @@ def get_rutetid_by_togrute_and_stasjon(conn, togrute_id, stasjon):
     try:
         c = conn.cursor()
         c.execute("SELECT avgang_tid FROM Rute_tid WHERE togrute_id = ? AND jernbanestasjon_navn = ?", (str(togrute_id), stasjon))
-        return c.fetchall()
+        return c.fetchone()
     except sqlite3.Error:
-        return None
-        
+        return None      
 
 def register_kunde(conn, navn, epost, mobilnummer):
     try:
@@ -59,8 +57,6 @@ def register_kunde(conn, navn, epost, mobilnummer):
         print("\nKunden finnes allerede i databasen.")
         return False
     return True
-
-
 
 def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
     if ukedag != None:
@@ -92,38 +88,6 @@ def print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
     except sqlite3.IntegrityError as e:
         print("Noe gikk galt ved henting av togruter:", e)
-
-    
-
-def create_vogn_and_plasser(conn, type, vogn_nr, vognoppsett_id, sections, seats_per_section):
-    try:
-        c = conn.cursor()
-        c.execute(
-            '''
-            INSERT INTO
-                Vogn (
-                    vogn_nummer,
-                    vognoppsett_id,
-                    vogn_type,
-                    antall_plasser,
-                    antall_inndelinger
-                )
-            VALUES
-                (?, ?, ?, ?, ?);
-            ''',
-            (vogn_nr, vognoppsett_id, type, seats_per_section, sections)
-        )
-
-        for seat_idx in range(1, sections * seats_per_section + 1):
-            c.execute(
-                "INSERT INTO Plass VALUES (?, ?, ?, ?);",
-                (vognoppsett_id, vogn_nr, seat_idx, math.ceil(seat_idx / seats_per_section))
-            )
-        conn.commit()
-            
-    except sqlite3.Error:
-        print("Klarer ikke opprette plasser.")
-        conn.rollback()
 
 def print_orders(conn, navn, mobilnummer):
     try:

@@ -54,45 +54,6 @@ def get_path(conn, start_station, end_station, banestrekning):
     print("Det finnes ingen mulig rute mellom disse stasjonene")
     return None
 
-
-# def insert_delstrekning(conn, startstasjon, endestasjon, avstand):
-#     try:
-#         c = conn.cursor()
-#         cursor = c.execute("INSERT INTO Delstrekning VALUES (?, ?, ?)", (endestasjon, startstasjon, avstand))
-#         c.commit()
-#     except Exception as e:
-#         print(e)
-#         return False
-    
-# def get_path(conn, start_station, end_station):
-#     if not station_does_exist(conn, start_station):
-#         print(f"{start_station} er ikke en registrert stasjon")
-#         return None
-#     if not station_does_exist(conn, end_station):
-#         print(f"{end_station} er ikke en registrert stasjon")
-#         return None
-
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT * FROM Delstrekning")
-#     rows = cursor.fetchall()
-#     rows = rows + [(x[1], x[0], x[2], x[3]) for x in rows]
-
-#     start_list = [x for x in rows if x[0] == start_station]
-#     if not start_list:
-#         print("Det finnes ikke en delstrekning fra denne startstasjonen")
-#         return None
-    
-#     path = [start_list[0]]
-#     while path[-1][1] != end_station:
-#         next_list = [x for x in rows if x[0] == path[-1][1] and x[1] != path[-1][0]]
-#         if not next_list:
-#             print(path)
-#             return None
-#         rows.remove(next_list[0])
-#         path.append(next_list[0])
-
-#     return path
-
 def path_contains_path(conn, path1, path2):
     for station in path1:
         if station not in path2:
@@ -104,14 +65,12 @@ def station_does_exist(conn, station):
     c.execute("SELECT * FROM Jernbanestasjon WHERE navn=?", (station,))
     return c.fetchone() is not None
 
-
 def verify_user(conn, navn, mobilnummer):
     cursor = conn.cursor()
     query = "SELECT COUNT(*) FROM Kunde WHERE navn=? AND mobilnummer=?"
     params = (navn, mobilnummer)
     cursor.execute(query, params)
     return cursor.fetchone()[0] > 0
-
 
 def verify_stasjoner(conn, togrute_id, startstasjon, endestasjon):
     if not startstasjon:
@@ -149,7 +108,6 @@ def number_to_day(num):
     if num < 0 or num > 6:
         return None
     return ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"][num]
-
 
 def find_togrute(conn, startstasjon, endestasjon):
     cursor = conn.cursor()
@@ -266,7 +224,6 @@ def is_valid_path(conn, startstasjon, endestasjon, banestrekning_navn, main_dire
         return False
     
     return all([segment in banestrekning_path for segment in path])
-
 
 def is_within_togrute(conn, togrute_id, startstasjon, endestasjon):
     togrute = get_togrute(conn, togrute_id)

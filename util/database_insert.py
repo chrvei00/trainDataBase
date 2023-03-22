@@ -1,4 +1,5 @@
 import sqlite3
+import math
 
 def insert_Kunde(conn, kunde_nummer, navn, epost, mobilnummer):
     try:
@@ -68,3 +69,43 @@ def insert_Billett(conn, vognoppsett_id, vogn_nummer, plass_nummer, ordre_nummer
     except sqlite3.Error:
         print("Klarer ikke opprette plasser.")
         conn.rollback()
+
+def insert_vogn_and_plasser(conn, type, vogn_nr, vognoppsett_id, sections, seats_per_section):
+    try:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO
+                Vogn (
+                    vogn_nummer,
+                    vognoppsett_id,
+                    vogn_type,
+                    antall_plasser,
+                    antall_inndelinger
+                )
+            VALUES
+                (?, ?, ?, ?, ?);
+            ''',
+            (vogn_nr, vognoppsett_id, type, seats_per_section, sections)
+        )
+
+        for seat_idx in range(1, sections * seats_per_section + 1):
+            c.execute(
+                "INSERT INTO Plass VALUES (?, ?, ?, ?);",
+                (vognoppsett_id, vogn_nr, seat_idx, math.ceil(seat_idx / seats_per_section))
+            )
+        conn.commit()
+            
+    except sqlite3.Error:
+        print("Klarer ikke opprette plasser.")
+        conn.rollback()
+
+
+def insert_delstrekning(conn, startstasjon, endestasjon, avstand):
+    try:
+        c = conn.cursor()
+        cursor = c.execute("INSERT INTO Delstrekning VALUES (?, ?, ?)", (endestasjon, startstasjon, avstand))
+        c.commit()
+    except Exception as e:
+        print(e)
+        return False
