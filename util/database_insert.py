@@ -65,7 +65,8 @@ def insert_Billett(conn, vognoppsett_id, vogn_nummer, plass_nummer, ordre_nummer
             ''',
             (vognoppsett_id, vogn_nummer, plass_nummer, ordre_nummer)
         )
-        conn.commit()      
+        conn.commit()  
+        return True    
     except sqlite3.Error:
         print("Klarer ikke opprette plasser.")
         conn.rollback()

@@ -1,10 +1,11 @@
 import sqlite3
 import datetime
 import pandas as pd
-import util.utils as utils
 from tabulate import tabulate
+import util.utils as utils
+import util.database_insert as dbi
 
-def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato):
+def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato, tid):
     try:
         print("\nSøker etter togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + "...\n")
         
@@ -17,18 +18,19 @@ def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato
         togruter = list(filter(lambda x: x[1] == dato or x[1] == next_date, togruter))
 
         togruter = list(map(
-            lambda x: [*x, get_rutetid_by_togrute_and_stasjon(conn, x[0], start_stasjon)], togruter))
+            lambda x: [*x, get_rutetid_by_togrute_and_stasjon(conn, x[0], start_stasjon)[0]], togruter))
+            
+        togruter = list(filter(lambda x: utils.compareDates(x[1], x[6], dato, tid) >= 0, togruter))
 
 
         #Sorterer togruter etter avgangstid fra startstasjon
-        togruter.sort(key=lambda x: x[6])
-        togruter.sort(key=lambda x: x[1])
+        togruter.sort(key=lambda x: (x[1], x[6]))
 
         if togruter == []:
             print("Fant ingen togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + ".")
 
         #Finner alle togruter som har en delstrekning som går mellom start og endestasjon
-        df = pd.DataFrame(togruter)
+        df = pd.DataFrame(togruter, columns=["id", "Dato", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn", f"Avgangstid fra {start_stasjon}"])
         
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
@@ -82,24 +84,54 @@ def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
        return False
 
 def print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
+    if utils.is_valid_weekday_string(ukedag):
+        ukedag = utils.get_weekday_number(ukedag)
     try:
         togruter = get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)
-        df = pd.DataFrame(togruter, columns=["id", "Dato", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn"])
+        togruter = list(map(lambda x: (x[0], x[2], x[3], x[4], x[5]), togruter))
+        df = pd.DataFrame(togruter, columns=["id", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn"])
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
     except sqlite3.IntegrityError as e:
         print("Noe gikk galt ved henting av togruter:", e)
 
-def print_orders(conn, navn, mobilnummer):
+def print_orders(conn, epost):
     try:
         c = conn.cursor()
         c.execute(
-            "SELECT * FROM Kunde NATURAL JOIN Kundeordre WHERE navn = ? AND mobilnummer = ?",
-            (navn, mobilnummer)
+            """
+            SELECT ordre_nummer, kjop_datotid, togrute_id, togruteforekomst_dato, pastigningstasjon_navn, avstigningstasjon_navn, vogn_nummer, plass_nummer 
+            FROM Kunde NATURAL JOIN Kundeordre 
+            NATURAL JOIN Billett
+            WHERE epost = ? AND kjop_datotid > CURRENT_TIMESTAMP
+            """,
+            (epost,)
         )
         orders =  c.fetchall()
-        df = pd.DataFrame(orders, columns=["Ordrenummer", "Kjopsdato", "Kundenummer", "Togrute_dato", "Togrute_id", "Til", "Fra"])
+        df = pd.DataFrame(orders, columns=["Ordrenummer", "Kjopsdato", "Togrute_id", "Togrute_dato", "Til", "Fra", "Vognnummer", "Plassnummer"])
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
     except sqlite3.Error:
         print("Klarer ikke å hente bestillinger.")
         return False
+
+def print_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
+    seats = utils.get_available_seats(conn, togrute_id, date, startstasjon, endestasjon)
+
+    print("Available seats:")
+    df = pd.DataFrame(seats, columns=["Plassnummer", "Vogn", "Setetype"])
+    print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
+    return seats
+
+def buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
+    if not dbi.insert_Billett(conn, togrute_id, vogn, plass, ordre_nummer):
+        print("Klarte ikke å kjøpe billett.")
+        return False
+    print("Billett kjøpt.")
+    return True
+
+def create_ordre(conn, togrute_id, dato, navn, email, pastigningsstasjon_navn, avstigningstasjon_navn):
+    kunde_nummer = utils.get_kunde_nummer(conn, navn, email)
+    ordre_nummer = utils.get_next_ordre_nummer(conn)
+    kjop_datotid = datetime.datetime.now()
+    dbi.insert_Kundeordre(conn, ordre_nummer, kjop_datotid, kunde_nummer, dato, togrute_id, pastigningsstasjon_navn, avstigningstasjon_navn)
+    return ordre_nummer

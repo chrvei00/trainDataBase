@@ -1,5 +1,6 @@
 import util.database_functions as dbf
 import util.utils as utils
+import util.validation as val
 
 def start(conn):
     while True:
@@ -9,7 +10,7 @@ def start(conn):
         print("2. Søk etter togruter")
         print("3. Registrer kunde")
         print("4. Bestill billeter")
-        print("5. Vis ordre")
+        print("5. Vis dine fremtidige reiser")
         print("0. Avslutt")
 
 
@@ -19,20 +20,44 @@ def start(conn):
         #Finn togruter for en stasjon på en ukedag
         if valg == 1:
             stasjon = input("Skriv inn stasjon: ")
-            ukedag = input("Skriv inn ukedag (0-6, hvor 0 er mandag): ")
-            togruter = dbf.print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)            
+            while not val.verify_stasjon(conn, stasjon):
+                print("Ugyldig stasjon. Prøv igjen.")
+                stasjon = input("Skriv inn stasjon: ")
+
+            ukedag = input("Skriv inn ukedag: ")
+            while not utils.is_valid_weekday_string(ukedag) and not utils.is_valid_weekday_number(ukedag):
+                print("Ugyldig ukedag. Prøv igjen.")
+                ukedag = input("Skriv inn en ukedag: ")
+
+            dbf.print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)            
         elif valg == 2:
             startstasjon = input("Skriv inn startstasjon: ")
+            while not val.verify_stasjon(conn, startstasjon):
+                print("Ugyldig startstasjon. Prøv igjen.")
+                stasjon = input("Skriv inn startstasjon: ")
+
             endestasjon = input("Skriv inn endestasjon: ")
+            while not val.verify_stasjon(conn, endestasjon):
+                print("Ugyldig endestasjon. Prøv igjen.")
+                stasjon = input("Skriv inn endestasjon: ")
+
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
+            while not utils.is_valid_date_string(dato):
+                print("Ugyldig dato. Prøv igjen.")
+                dato = input("Skriv inn dato (YYYY-MM-DD): ")
+
             tid = input("Skriv inn tid (HH:MM): ")
-            dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato)
+            while not utils.is_valid_time_string(tid):
+                print("Ugyldig tid. Prøv igjen.")
+                tid = input("Skriv inn tid (HH:MM): ")
+
+            dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato, tid)
 
         #Registrer kunde
         elif valg == 3:
             while True:
                 navn = input("Skriv inn navn: ")
-                epost = input("Skriv inn epost: ")
+                epost = input("Skriv inn email: ")
                 mobilnummer = input("Skriv inn mobilnummer: ")
                 if(dbf.register_kunde(conn, navn, epost, mobilnummer)):
                     break
@@ -42,37 +67,67 @@ def start(conn):
                     
         elif valg == 4:
             navn = input("Skriv inn navn: ")
-            mobilnummer = input("Skriv inn mobilnummer: ")
-            if (not utils.verify_user(conn, navn, mobilnummer)):
+            email = input("Skriv inn email: ")
+            if (not val.verify_user(conn, email)):
                 print("Kunde finnes ikke i systemet. \n")
                 break
             print("Kunde verifisert. \n")
-            startstasjon = input("Skriv inn startstasjon: ")
-            endestasjon = input("Skriv inn endestasjon: ")
 
-            togrute = utils.find_togrute(conn, startstasjon, endestasjon)
-            if not togrute:
-                print(f"Fant ingen togruter fra {startstasjon} til {endestasjon}\n")
-                break
+            startstasjon = input("Skriv inn startstasjon: ")
+            while not val.verify_stasjon(conn, startstasjon):
+                print("Ugyldig startstasjon. Prøv igjen.")
+                stasjon = input("Skriv inn startstasjon: ")
+
+            endestasjon = input("Skriv inn endestasjon: ")
+            while not val.verify_stasjon(conn, endestasjon):
+                print("Ugyldig endestasjon. Prøv igjen.")
+                stasjon = input("Skriv inn endestasjon: ")
             
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
+            while not utils.is_valid_date_string(dato):
+                print("Ugyldig dato. Prøv igjen.")
+                dato = input("Skriv inn dato (YYYY-MM-DD): ")
 
-            #TODO print billeter (med plassnummer)
+            if not dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato, "00:00"):
+                break
+
+            togrute_id = input("Skriv inn id for ruten du vil kjøpe billettet til: ")
+            
+            first = True
             while True:
-                billett = input("Skriv inn billett: ")
-                #TODO dbf.buy_billett(conn, billett)
-                #TODO print billett
-                print("Billett kjøpt. \n")
-                if(input("Vil du kjøpe flere billeter? (y/n)") == "n"):
+                seats = dbf.print_available_seats(conn, togrute_id, dato, startstasjon, endestasjon)
+                vogn = input("\nSkriv inn vogn_nummer (eller none): ")
+                if vogn == "none":
                     break
+                plass = input("\nSkriv inn plass_nummer (eller none): ")
+                if plass == "none":
+                    break
+                while (not any([int(plass) == seat[0] and int(vogn) == seat[1] for seat in seats])):
+                    print("Plassen er opptatt eller finnes ikke. Prøv igjen.")
+                    vogn = input("\nSkriv inn vogn_nummer (eller none): ")
+                    if vogn == "none":
+                        break
+                    plass = input("\nSkriv inn plass_nummer (eller none): ")
+                    if plass == "none":
+                        break
+                if (vogn == "none" or plass == "none"):
+                    break
+                if first:
+                    print("Lager ordre...")
+                    ordre_nummer = dbf.create_ordre(conn, togrute_id, dato, navn, email, startstasjon, endestasjon)
+                if not dbf.buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
+                    break
+                if(input("\nVil du kjøpe flere billeter? (y/n)") == "n"):
+                    break
+                first = False
+
         elif valg == 5:
-            navn = input("Skriv inn navn: ")
-            mobilnummer = input("Skriv inn mobilnummer: ")
-            if (not utils.verify_user(conn, navn, mobilnummer)):
+            epost = val("Skriv inn epost: ")
+            if (not val.verify_user(conn, epost)):
                 print("Kunde finnes ikke i systemet. \n")
                 break
             print("Kunde verifisert. \n")
-            dbf.print_orders(conn, navn, mobilnummer)
+            dbf.print_orders(conn, epost)
         elif valg == 0:
             break
         else:

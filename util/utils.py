@@ -1,11 +1,13 @@
 import pandas as pd
 from tabulate import tabulate
+import datetime
+import util.validation as val
 
 def get_path(conn, start_station, end_station, banestrekning):
-    if not station_does_exist(conn, start_station):
+    if not val.verify_stasjon(conn, start_station):
         print(f"{start_station} er ikke en registrert stasjon")
         return None
-    if not station_does_exist(conn, end_station):
+    if not val.verify_stasjon(conn, end_station):
         print(f"{end_station} er ikke en registrert stasjon")
         return None
 
@@ -54,39 +56,6 @@ def get_path(conn, start_station, end_station, banestrekning):
     print("Det finnes ingen mulig rute mellom disse stasjonene")
     return None
 
-def path_contains_path(conn, path1, path2):
-    for station in path1:
-        if station not in path2:
-            return False
-    return True
-    
-def station_does_exist(conn, station):
-    c = conn.cursor()
-    c.execute("SELECT * FROM Jernbanestasjon WHERE navn=?", (station,))
-    return c.fetchone() is not None
-
-def verify_user(conn, navn, mobilnummer):
-    cursor = conn.cursor()
-    query = "SELECT COUNT(*) FROM Kunde WHERE navn=? AND mobilnummer=?"
-    params = (navn, mobilnummer)
-    cursor.execute(query, params)
-    return cursor.fetchone()[0] > 0
-
-def verify_stasjoner(conn, togrute_id, startstasjon, endestasjon):
-    if not startstasjon:
-        print("Du må velge en startstasjon")
-        return False
-    if not endestasjon:
-        print("Du må velge en endestasjon")
-        return False
-    if startstasjon == endestasjon:
-        print("Startstasjon og endestasjon kan ikke være like")
-        return False
-    if not start_and_endstation_in_togrute(conn, togrute_id, startstasjon, endestasjon):
-        print("Startstasjon og endestasjon må være i samme togrute")
-        return False
-    return True
-
 def start_and_endstation_in_togrute(conn, togrute_id, startstasjon, endestasjon, banestrekning):
     togrute_obj = get_togrute(conn, togrute_id)
     togrute_start = togrute_obj[2]
@@ -125,7 +94,7 @@ def find_togrute(conn, startstasjon, endestasjon):
 def get_all_seats(conn, togrute_id, date):
     cursor = conn.cursor()
     query = """
-    SELECT plass_nummer, vogn_nummer
+    SELECT plass_nummer, vogn_nummer, vogn_type
     FROM Togrute
     NATURAL JOIN Togruteforekomst
     NATURAL JOIN Vognoppsett
@@ -146,10 +115,12 @@ def get_all_seats(conn, togrute_id, date):
 def get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date):
     cursor = conn.cursor()
     query = """
-    SELECT pastigningstasjon_navn, avstigningstasjon_navn, plass_nummer, vogn_nummer
+    SELECT pastigningstasjon_navn, avstigningstasjon_navn, plass_nummer, vogn_nummer, vogn_type, banestrekning_navn
     FROM Kundeordre
     JOIN Togruteforekomst ON Kundeordre.togruteforekomst_dato = Togruteforekomst.dato AND Kundeordre.togrute_id = Togruteforekomst.togrute_id
     NATURAL JOIN Billett
+    NATURAL JOIN Vogn
+    NATURAL JOIN Togrute
     WHERE Kundeordre.togrute_id = ? AND Kundeordre.togruteforekomst_dato = ?
     """
     params = (togrute_id, date)
@@ -165,65 +136,26 @@ def get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date):
 def is_overlapping_routes(conn, start1, end1, start2, end2, banestrekning):
     path1 = get_path(conn, start1, end1, banestrekning)
     path2 = get_path(conn, start2, end2, banestrekning)
-    print(f"start 1: {start1}, end 1: {end1}")
-    print(path1)
-    print(path2)
 
     return any(pair in path1 for pair in path2)
 
 def get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon):
     kundeordrer = get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date)
     
-    return [x for x in kundeordrer if is_overlapping_routes(conn, x[0], x[1], startstasjon, endestasjon)]
+    return [x for x in kundeordrer if is_overlapping_routes(conn, x[0], x[1], startstasjon, endestasjon, x[5])]
 
 def get_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
     togrute = get_togrute(conn, togrute_id)
     togrute_start = togrute[2]
     togrute_end = togrute[3]
 
-    if startstasjon == endestasjon or not is_overlapping_routes(conn, togrute_start, togrute_end, startstasjon, endestasjon):
+    if startstasjon == endestasjon or not is_overlapping_routes(conn, togrute_start, togrute_end, startstasjon, endestasjon, togrute[4]):
         return []
 
     all_seats = get_all_seats(conn, togrute_id, date)
-    taken_seats = list(map(lambda x: (x[2], x[3]), get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon)))
+    taken_seats = list(map(lambda x: (x[2], x[3], x[4]), get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon)))
 
     return [x for x in all_seats if x not in taken_seats]
-
-def print_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
-    seats = get_available_seats(conn, togrute_id, date, startstasjon, endestasjon)
-
-    print("Available seats:")
-    df = pd.DataFrame(seats, columns=["Plassnummer", "Vogn"])
-    print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
-
-def is_valid_path(conn, startstasjon, endestasjon, banestrekning_navn, main_direction = True):
-    c = conn.cursor()
-    query = """
-    SELECT *
-    FROM Banestrekning
-    WHERE banestrekning_navn = ?
-    """
-    c.execute(query, (banestrekning_navn,))
-    banestrekning = c.fetchone()
-
-    if banestrekning is None:
-        print(f"Banestrekning {banestrekning_navn} eksisterer ikke")
-        return False
-
-    banestrekning_start = banestrekning[1]
-    banestrekning_end = banestrekning[2]
-
-    path = get_path(conn, startstasjon, endestasjon, banestrekning)
-    banestrekning_path = get_path(conn, banestrekning_start, banestrekning_end, banestrekning_navn)
-
-    if not main_direction:
-        banestrekning_path = list(map(lambda x: (x[1], x[0]), banestrekning_path))[::-1]
-
-    if path is None or banestrekning_path is None:
-        print(f"Enten {startstasjon} eller {endestasjon} eller {banestrekning_navn} er ikke gyldig")
-        return False
-    
-    return all([segment in banestrekning_path for segment in path])
 
 def is_within_togrute(conn, togrute_id, startstasjon, endestasjon):
     togrute = get_togrute(conn, togrute_id)
@@ -246,3 +178,74 @@ def get_containing_togruter(conn, startstasjon, endestasjon):
     togruter = c.fetchall()
 
     return [x for x in togruter if is_within_togrute(conn, x[0], startstasjon, endestasjon)]
+
+def compareDates(date, time, input_date, input_time):
+        date = datetime.datetime.strptime(date, "%Y-%m-%d")
+        time = datetime.datetime.strptime(time, "%H:%M")
+        date_time = datetime.datetime.combine(date, time.time())
+
+        input_date = datetime.datetime.strptime(input_date, "%Y-%m-%d")
+        input_time = datetime.datetime.strptime(input_time, "%H:%M")
+        input_date_time = datetime.datetime.combine(input_date, input_time.time())
+
+        if date_time > input_date_time:
+            return 1
+        elif date_time == input_date_time:
+            return 0
+        else:
+            return -1
+
+def is_valid_date_string(date):
+    try:
+        datetime.datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+def is_valid_time_string(time):
+    try:
+        datetime.datetime.strptime(time, "%H:%M")
+        return True
+    except ValueError:
+        return False
+
+def is_valid_weekday_string(weekday_string):
+    return weekday_string in ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+
+def is_valid_weekday_number(weekday_number):
+    try:
+        weekday_number = int(weekday_number)
+    except ValueError:
+        return False
+    return weekday_number >= 0 and weekday_number <= 6
+
+def get_weekday_number(weekday_string):
+    weekdays = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+    return weekdays.index(weekday_string)
+
+def get_next_ordre_nummer(conn):
+    c = conn.cursor()
+    query = """
+    SELECT MAX(ordre_nummer)
+    FROM KundeOrdre
+    """
+    c.execute(query)
+    max_ordre_nummer = c.fetchone()[0]
+    if max_ordre_nummer is None:
+        return 1
+    else:
+        return max_ordre_nummer + 1
+
+def get_kunde_nummer(conn, navn, email):
+    c = conn.cursor()
+    query = """
+    SELECT kunde_nummer
+    FROM Kunde
+    WHERE epost = ?
+    """
+    c.execute(query, (email,))
+    kunde_nummer = c.fetchone()
+    if kunde_nummer is None:
+        return None
+    else:
+        return kunde_nummer[0]
