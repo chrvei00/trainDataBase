@@ -4,6 +4,7 @@ import pandas as pd
 from tabulate import tabulate
 import util.utils as utils
 import util.database_insert as dbi
+import util.validation as val
 
 def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato, tid):
     try:
@@ -84,7 +85,7 @@ def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
        return False
 
 def print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
-    if utils.is_valid_weekday_string(ukedag):
+    if val.verify_weekday_string(ukedag):
         ukedag = utils.get_weekday_number(ukedag)
     try:
         togruter = get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)
@@ -129,8 +130,8 @@ def buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
     print("Billett kjøpt.")
     return True
 
-def create_ordre(conn, togrute_id, dato, navn, email, pastigningsstasjon_navn, avstigningstasjon_navn):
-    kunde_nummer = utils.get_kunde_nummer(conn, navn, email)
+def create_ordre(conn, togrute_id, dato, email, pastigningsstasjon_navn, avstigningstasjon_navn):
+    kunde_nummer = utils.get_kunde_nummer(conn, email)
     ordre_nummer = utils.get_next_ordre_nummer(conn)
     kjop_datotid = datetime.datetime.now()
     dbi.insert_Kundeordre(conn, ordre_nummer, kjop_datotid, kunde_nummer, dato, togrute_id, pastigningsstasjon_navn, avstigningstasjon_navn)

@@ -1,5 +1,4 @@
 import util.database_functions as dbf
-import util.utils as utils
 import util.validation as val
 
 def start(conn):
@@ -25,7 +24,7 @@ def start(conn):
                 stasjon = input("Skriv inn stasjon: ")
 
             ukedag = input("Skriv inn ukedag: ")
-            while not utils.is_valid_weekday_string(ukedag) and not utils.is_valid_weekday_number(ukedag):
+            while not val.verify_weekday_string(ukedag) and not val.verify_weekday_number(ukedag):
                 print("Ugyldig ukedag. Prøv igjen.")
                 ukedag = input("Skriv inn en ukedag: ")
 
@@ -42,12 +41,12 @@ def start(conn):
                 stasjon = input("Skriv inn endestasjon: ")
 
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
-            while not utils.is_valid_date_string(dato):
+            while not val.verify_date_string(dato):
                 print("Ugyldig dato. Prøv igjen.")
                 dato = input("Skriv inn dato (YYYY-MM-DD): ")
 
             tid = input("Skriv inn tid (HH:MM): ")
-            while not utils.is_valid_time_string(tid):
+            while not val.verify_time_string(tid):
                 print("Ugyldig tid. Prøv igjen.")
                 tid = input("Skriv inn tid (HH:MM): ")
 
@@ -66,7 +65,6 @@ def start(conn):
                         break
                     
         elif valg == 4:
-            navn = input("Skriv inn navn: ")
             email = input("Skriv inn email: ")
             if (not val.verify_user(conn, email)):
                 print("Kunde finnes ikke i systemet. \n")
@@ -84,7 +82,7 @@ def start(conn):
                 stasjon = input("Skriv inn endestasjon: ")
             
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
-            while not utils.is_valid_date_string(dato):
+            while not val.verify_date_string(dato):
                 print("Ugyldig dato. Prøv igjen.")
                 dato = input("Skriv inn dato (YYYY-MM-DD): ")
 
@@ -114,7 +112,7 @@ def start(conn):
                     break
                 if first:
                     print("Lager ordre...")
-                    ordre_nummer = dbf.create_ordre(conn, togrute_id, dato, navn, email, startstasjon, endestasjon)
+                    ordre_nummer = dbf.create_ordre(conn, togrute_id, dato, email, startstasjon, endestasjon)
                 if not dbf.buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
                     break
                 if(input("\nVil du kjøpe flere billeter? (y/n)") == "n"):
@@ -122,7 +120,7 @@ def start(conn):
                 first = False
 
         elif valg == 5:
-            epost = val("Skriv inn epost: ")
+            epost = input("Skriv inn epost: ")
             if (not val.verify_user(conn, epost)):
                 print("Kunde finnes ikke i systemet. \n")
                 break

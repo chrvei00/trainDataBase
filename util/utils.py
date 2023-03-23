@@ -78,19 +78,6 @@ def number_to_day(num):
         return None
     return ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"][num]
 
-def find_togrute(conn, startstasjon, endestasjon):
-    cursor = conn.cursor()
-    query = "SELECT * FROM Togrute"
-    params = (startstasjon, endestasjon)
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-
-    for togrute in rows:
-        if start_and_endstation_in_togrute(conn, togrute[0], startstasjon, endestasjon):
-            return togrute
-
-    return None
-
 def get_all_seats(conn, togrute_id, date):
     cursor = conn.cursor()
     query = """
@@ -107,10 +94,6 @@ def get_all_seats(conn, togrute_id, date):
     seats = cursor.fetchall()
     
     return seats
-
-    # print("All seats:")
-    # df = pd.DataFrame(seats, columns=["Plassnummer", "Inndeling", "Vogn"])
-    # print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
 
 def get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date):
     cursor = conn.cursor()
@@ -129,10 +112,6 @@ def get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date):
 
     return seats
     
-    # print("Taken seats:")
-    # df = pd.DataFrame(seats, columns=["Påstigningstasjon", "Avstigningstasjon", "Plassnummer", "Vogn"])
-    # print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
-
 def is_overlapping_routes(conn, start1, end1, start2, end2, banestrekning):
     path1 = get_path(conn, start1, end1, banestrekning)
     path2 = get_path(conn, start2, end2, banestrekning)
@@ -195,29 +174,6 @@ def compareDates(date, time, input_date, input_time):
         else:
             return -1
 
-def is_valid_date_string(date):
-    try:
-        datetime.datetime.strptime(date, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
-
-def is_valid_time_string(time):
-    try:
-        datetime.datetime.strptime(time, "%H:%M")
-        return True
-    except ValueError:
-        return False
-
-def is_valid_weekday_string(weekday_string):
-    return weekday_string in ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
-
-def is_valid_weekday_number(weekday_number):
-    try:
-        weekday_number = int(weekday_number)
-    except ValueError:
-        return False
-    return weekday_number >= 0 and weekday_number <= 6
 
 def get_weekday_number(weekday_string):
     weekdays = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
@@ -236,7 +192,7 @@ def get_next_ordre_nummer(conn):
     else:
         return max_ordre_nummer + 1
 
-def get_kunde_nummer(conn, navn, email):
+def get_kunde_nummer(conn, email):
     c = conn.cursor()
     query = """
     SELECT kunde_nummer

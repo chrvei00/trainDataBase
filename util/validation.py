@@ -1,4 +1,5 @@
-import util.utils as util
+import datetime
+
 
 def verify_user(conn, email):
     cursor = conn.cursor()
@@ -12,17 +13,27 @@ def verify_stasjon(conn, station):
     c.execute("SELECT * FROM Jernbanestasjon WHERE navn=?", (station,))
     return c.fetchone() is not None
 
-def verify_stasjoner(conn, togrute_id, startstasjon, endestasjon):
-    if not startstasjon:
-        print("Du må velge en startstasjon")
+def verify_date_string(date):
+    try:
+        datetime.datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
         return False
-    if not endestasjon:
-        print("Du må velge en endestasjon")
+
+def verify_time_string(time):
+    try:
+        datetime.datetime.strptime(time, "%H:%M")
+        return True
+    except ValueError:
         return False
-    if startstasjon == endestasjon:
-        print("Startstasjon og endestasjon kan ikke være like")
+
+def verify_weekday_string(weekday_string):
+    return weekday_string in ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+
+def verify_weekday_number(weekday_number):
+    try:
+        weekday_number = int(weekday_number)
+    except ValueError:
         return False
-    if not util.start_and_endstation_in_togrute(conn, togrute_id, startstasjon, endestasjon):
-        print("Startstasjon og endestasjon må være i samme togrute")
-        return False
-    return True
+    return weekday_number >= 0 and weekday_number <= 6
+
