@@ -91,22 +91,20 @@ def start(conn):
                 print(colored("Ugyldig dato. Prøv igjen.", "red"))
                 dato = input("Skriv inn dato (YYYY-MM-DD): ")
 
-            if not dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato, "00:00"):
+            togruter = dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato, "00:00")
+            if not togruter:
                 break
 
             print(colored("\nVelg rute:", 'blue'))
-            togrute_id = input(
-                "\nSkriv inn id for ruten du vil kjøpe billettet til: ")
-            while not val.verify_togrute_id(conn, togrute_id):
+            select_togrute = int(input(
+                "\nSkriv inn id for ruten du vil kjøpe billettet til: "))
+            togrute_id = togruter[select_togrute][0]
+            dato = togruter[select_togrute][6]
+            while not val.verify_togrute_id(conn, togrute_id) and not val.verify_togrute_date(conn, togrute_id, dato):
                 print(colored("Ugyldig togrute_id. Prøv igjen.", "red"))
-                togrute_id = input(
-                    "Skriv inn id for ruten du vil kjøpe billettet til: ")
-
-            dato = input("Skriv inn dato for toget du ønsker (YYYY-MM-DD): ")
-            while not val.verify_date_string(dato) or not val.verify_togruteforekomst_exists(conn, dato, togrute_id):
-                print(colored("Ugyldig dato eller format. Prøv igjen.", "red"))
-                dato = input(
-                    "Skriv inn dato for toget du ønsker (YYYY-MM-DD): ")
+                select_togrute = input("\nSkriv inn id for ruten du vil kjøpe billettet til: ")
+                togrute_id = togruter[select_togrute][0]
+                dato = togruter[select_togrute][6]
 
             first = True
             while True:

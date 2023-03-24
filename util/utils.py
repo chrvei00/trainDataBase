@@ -1,5 +1,3 @@
-import pandas as pd
-from tabulate import tabulate
 import datetime
 import util.validation as val
 
@@ -76,7 +74,7 @@ def get_togrute(conn, togrute_id):
 def number_to_day(num):
     if num < 0 or num > 6:
         return None
-    return ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"][num]
+    return ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"][num]
 
 def get_all_seats(conn, togrute_id, date):
     cursor = conn.cursor()
@@ -187,7 +185,7 @@ def compareDates(date_time, input_date, input_time):
 
 
 def get_weekday_number(weekday_string):
-    weekdays = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+    weekdays = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"]
     return weekdays.index(weekday_string)
 
 def get_next_ordre_nummer(conn):
