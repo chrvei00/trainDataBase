@@ -9,7 +9,7 @@ import util.validation as val
 
 def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato, tid):
     try:
-        print(colored("\nSøker etter togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + "...\n", "blue"))
+        print(colored(f"\nSøker etter togruter fra {start_stasjon} til {ende_stasjon} på datoen {dato} etter klokken {tid}....\n", "blue"))
         
         #Finn datoene
         date_obj = datetime.datetime.strptime(dato, "%Y-%m-%d")
@@ -17,22 +17,25 @@ def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato
         next_date = next_date_obj.strftime("%Y-%m-%d")
         
         togruter = utils.get_containing_togruter(conn, start_stasjon, ende_stasjon)
-        togruter = list(filter(lambda x: x[1] == dato or x[1] == next_date, togruter))
 
         togruter = list(map(
             lambda x: [*x, get_rutetid_by_togrute_and_stasjon(conn, x[0], start_stasjon)[0]], togruter))
             
-        togruter = list(filter(lambda x: utils.compareDates(x[1], x[6], dato, tid) >= 0, togruter))
-
-
-        #Sorterer togruter etter avgangstid fra startstasjon
-        togruter.sort(key=lambda x: (x[1], x[6]))
 
         if togruter == []:
-            print(colored("Fant ingen togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + ".", "red"))
+            print(colored(f"Fant ingen togruter fra {start_stasjon} til {ende_stasjon} på datoen {dato} etter klokken {tid}.", "red"))
+            return
+
+        togruter = map(lambda x: (x[0], f"{x[4]} - {x[2]} ➢ {x[3]}", x[5], start_stasjon, ende_stasjon, utils.get_correct_date(x[1], get_rutetid_by_togrute_and_stasjon(conn, x[0], x[2])[0], x[6]) + " " + x[6]), togruter)
+        
+        #Sort and filter
+        togruter = list(filter(lambda x: utils.compareDates(x[5], dato, tid) >= 0, togruter))
+        togruter = list(filter(lambda x: x[5][0:10] == dato or x[5][0:10] == next_date, togruter))
+        togruter.sort(key=lambda x: (x[5]))
+
 
         #Finner alle togruter som har en delstrekning som går mellom start og endestasjon
-        df = pd.DataFrame(togruter, columns=["id", "Dato", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn", f"Avgangstid fra {start_stasjon}"])
+        df = pd.DataFrame(togruter, columns=["id", "Togrute", "Banestrekning", "Påstigningstasjon", "Avstigningstasjon", f"Avgang {start_stasjon}"])
         
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
@@ -63,7 +66,7 @@ def register_kunde(conn, navn, epost, mobilnummer):
 
 def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
     if ukedag != None:
-        print(colored("\nHenter togruter for stasjon", stasjon, "på", utils.number_to_day(int(ukedag)), "...\n", "blue"))
+        print(colored(f"\nHenter togruter for stasjon {stasjon} på {utils.number_to_day(int(ukedag))}...\n", "blue"))
     try:
         c = conn.cursor()
         c.execute("""

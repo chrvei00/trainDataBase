@@ -171,11 +171,9 @@ def get_containing_togruter(conn, startstasjon, endestasjon):
 
     return [x for x in togruter if is_within_togrute(conn, x[0], startstasjon, endestasjon)]
 
-def compareDates(date, time, input_date, input_time):
-        date = datetime.datetime.strptime(date, "%Y-%m-%d")
-        time = datetime.datetime.strptime(time, "%H:%M")
-        date_time = datetime.datetime.combine(date, time.time())
-
+def compareDates(date_time, input_date, input_time):
+        date_time = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M")
+        
         input_date = datetime.datetime.strptime(input_date, "%Y-%m-%d")
         input_time = datetime.datetime.strptime(input_time, "%H:%M")
         input_date_time = datetime.datetime.combine(input_date, input_time.time())
@@ -221,3 +219,10 @@ def get_kunde_nummer(conn, email):
 
 def is_adjacent_bed_taken(plass_nummer, vogn_nummer, inndeling_nummer, objs):
     return any([x[3] == vogn_nummer and x[6] == inndeling_nummer and x[2] != plass_nummer for x in objs])
+
+def get_correct_date(startstasjon_dato, startstasjon_rutetid, avgangstasjon_rutetid):
+    if(startstasjon_rutetid > avgangstasjon_rutetid):
+        startstasjon_dato = datetime.datetime.strptime(startstasjon_dato, "%Y-%m-%d")
+        startstasjon_dato += datetime.timedelta(days=1)
+        startstasjon_dato = startstasjon_dato.strftime("%Y-%m-%d")
+    return startstasjon_dato
