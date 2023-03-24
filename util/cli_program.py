@@ -34,12 +34,12 @@ def start(conn):
             startstasjon = input("Skriv inn startstasjon: ")
             while not val.verify_stasjon(conn, startstasjon):
                 print(colored("Ugyldig startstasjon. Prøv igjen.", "red"))
-                stasjon = input("Skriv inn startstasjon: ")
+                startstasjon = input("Skriv inn startstasjon: ")
 
             endestasjon = input("Skriv inn endestasjon: ")
             while not val.verify_stasjon(conn, endestasjon):
                 print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
-                stasjon = input("Skriv inn endestasjon: ")
+                endestasjon = input("Skriv inn endestasjon: ")
 
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
             while not val.verify_date_string(dato):
