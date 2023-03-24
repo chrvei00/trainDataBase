@@ -102,7 +102,8 @@ INSERT INTO
         operator_navn,
         startstasjon,
         endestasjon,
-        banestrekning_navn
+        banestrekning_navn,
+        togrute_navn
     )
 VALUES
     (
@@ -110,21 +111,24 @@ VALUES
         'NSB',
         'Oslo S',
         'Bergen stasjon',
-        'Oslo-Bergen'
+        'Oslo-Bergen',
+        'Dagtog Oslo-Bergen'
     ),
     (
         2,
         'VY',
         'Drammen stasjon',
         'Kristiansand stasjon',
-        'Drammen-Kristiansand'
+        'Drammen-Kristiansand',
+        'Kveldstog Drammen-Kristiansand'
     ),
     (
         3,
         'YV',
         'Trondheim stasjon',
         'Stavanger stasjon',
-        'Trondheim-Stavanger'
+        'Trondheim-Stavanger',
+        'Nattog Trondheim-Stavanger'
     );
 
 /* Test Togruteforekomst */
