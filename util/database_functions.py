@@ -2,13 +2,14 @@ import sqlite3
 import datetime
 import pandas as pd
 from tabulate import tabulate
+from termcolor import colored
 import util.utils as utils
 import util.database_insert as dbi
 import util.validation as val
 
 def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato, tid):
     try:
-        print("\nSøker etter togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + "...\n")
+        print(colored("\nSøker etter togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + "...\n", "blue"))
         
         #Finn datoene
         date_obj = datetime.datetime.strptime(dato, "%Y-%m-%d")
@@ -28,7 +29,7 @@ def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato
         togruter.sort(key=lambda x: (x[1], x[6]))
 
         if togruter == []:
-            print("Fant ingen togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + ".")
+            print(colored("Fant ingen togruter fra " + start_stasjon + " til " + ende_stasjon + " på datoen " + dato + ".", "red"))
 
         #Finner alle togruter som har en delstrekning som går mellom start og endestasjon
         df = pd.DataFrame(togruter, columns=["id", "Dato", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn", f"Avgangstid fra {start_stasjon}"])
@@ -36,7 +37,7 @@ def print_togruter_by_stasjoner_and_date(conn, start_stasjon, ende_stasjon, dato
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
     except sqlite3.Error as e:
-        print("\nKlarte ikke finne noen togruter mellom stasjonene")
+        print(colored("\nKlarte ikke finne noen togruter mellom stasjonene", "red"))
         return False
 
 def get_rutetid_by_togrute_and_stasjon(conn, togrute_id, stasjon):
@@ -55,15 +56,14 @@ def register_kunde(conn, navn, epost, mobilnummer):
             (navn, epost, mobilnummer)
         )
         conn.commit()
-        print("\nKunde registrert.")
     except sqlite3.IntegrityError:
-        print("\nKunden finnes allerede i databasen.")
+        print(colored("\nKunden finnes allerede i databasen.", "red"))
         return False
     return True
 
 def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
     if ukedag != None:
-        print("\nHenter togruter for stasjon", stasjon, "på", utils.number_to_day(int(ukedag)), "...\n")
+        print(colored("\nHenter togruter for stasjon", stasjon, "på", utils.number_to_day(int(ukedag)), "...\n", "blue"))
     try:
         c = conn.cursor()
         c.execute("""
@@ -93,7 +93,7 @@ def print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
         df = pd.DataFrame(togruter, columns=["id", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn"])
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
     except sqlite3.IntegrityError as e:
-        print("Noe gikk galt ved henting av togruter:", e)
+        print(colored("Noe gikk galt ved henting av togruter:", "red"))
 
 def print_orders(conn, epost):
     try:
@@ -112,22 +112,22 @@ def print_orders(conn, epost):
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
     except sqlite3.Error:
-        print("Klarer ikke å hente bestillinger.")
+        print(colored("Klarer ikke å hente bestillinger.", "red"))
         return False
 
 def print_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
     seats = utils.get_available_seats(conn, togrute_id, date, startstasjon, endestasjon)
 
-    print("Available seats:")
-    df = pd.DataFrame(seats, columns=["Plassnummer", "Vogn", "Setetype"])
+    print(colored("Available seats:", "green"))
+    df = pd.DataFrame(seats, columns=["Vogn", "Plassnummer", "Inndeling", "Setetype"])
     print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
     return seats
 
 def buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
     if not dbi.insert_Billett(conn, togrute_id, vogn, plass, ordre_nummer):
-        print("Klarte ikke å kjøpe billett.")
+        print(colored("Klarte ikke å kjøpe billett.", "red"))
         return False
-    print("Billett kjøpt.")
+    print(colored("Billett kjøpt.", "green"))
     return True
 
 def create_ordre(conn, togrute_id, dato, email, pastigningsstasjon_navn, avstigningstasjon_navn):

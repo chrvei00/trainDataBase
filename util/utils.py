@@ -81,7 +81,7 @@ def number_to_day(num):
 def get_all_seats(conn, togrute_id, date):
     cursor = conn.cursor()
     query = """
-    SELECT plass_nummer, vogn_nummer, vogn_type
+    SELECT vogn_nummer, plass_nummer, inndeling_nummer, vogn_type
     FROM Togrute
     NATURAL JOIN Togruteforekomst
     NATURAL JOIN Vognoppsett
@@ -98,12 +98,13 @@ def get_all_seats(conn, togrute_id, date):
 def get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date):
     cursor = conn.cursor()
     query = """
-    SELECT pastigningstasjon_navn, avstigningstasjon_navn, plass_nummer, vogn_nummer, vogn_type, banestrekning_navn
+    SELECT pastigningstasjon_navn, avstigningstasjon_navn, plass_nummer, vogn_nummer, vogn_type, banestrekning_navn, inndeling_nummer
     FROM Kundeordre
     JOIN Togruteforekomst ON Kundeordre.togruteforekomst_dato = Togruteforekomst.dato AND Kundeordre.togrute_id = Togruteforekomst.togrute_id
     NATURAL JOIN Billett
     NATURAL JOIN Vogn
     NATURAL JOIN Togrute
+    NATURAL JOIN Plass
     WHERE Kundeordre.togrute_id = ? AND Kundeordre.togruteforekomst_dato = ?
     """
     params = (togrute_id, date)
@@ -120,8 +121,20 @@ def is_overlapping_routes(conn, start1, end1, start2, end2, banestrekning):
 
 def get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon):
     kundeordrer = get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date)
-    
-    return [x for x in kundeordrer if is_overlapping_routes(conn, x[0], x[1], startstasjon, endestasjon, x[5])]
+    new_kundeordrer = []
+    for kundeordre in kundeordrer:
+        if kundeordre[4] == "sitte": continue
+
+        if is_adjacent_bed_taken(kundeordre[2], kundeordre[3], kundeordre[6], kundeordrer):
+            continue
+
+        offset = 1 if kundeordre[2] % 2 == 1 else -1
+        new_kundeordre = (kundeordre[0], kundeordre[1], kundeordre[2] + offset, kundeordre[3], kundeordre[4], kundeordre[5], kundeordre[6])
+        if new_kundeordre not in kundeordrer:
+            new_kundeordrer.append(new_kundeordre)
+
+    kundeordrer += new_kundeordrer
+    return [x for x in kundeordrer if is_overlapping_routes(conn, x[0], x[1], startstasjon, endestasjon, x[5]) or x[4] == "sove"]
 
 def get_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
     togrute = get_togrute(conn, togrute_id)
@@ -132,7 +145,7 @@ def get_available_seats(conn, togrute_id, date, startstasjon, endestasjon):
         return []
 
     all_seats = get_all_seats(conn, togrute_id, date)
-    taken_seats = list(map(lambda x: (x[2], x[3], x[4]), get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon)))
+    taken_seats = list(map(lambda x: (x[3], x[2], x[6], x[4]), get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon)))
 
     return [x for x in all_seats if x not in taken_seats]
 
@@ -205,3 +218,6 @@ def get_kunde_nummer(conn, email):
         return None
     else:
         return kunde_nummer[0]
+
+def is_adjacent_bed_taken(plass_nummer, vogn_nummer, inndeling_nummer, objs):
+    return any([x[3] == vogn_nummer and x[6] == inndeling_nummer and x[2] != plass_nummer for x in objs])

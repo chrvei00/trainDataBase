@@ -1,4 +1,5 @@
 import datetime
+import util.utils as utils
 
 
 def verify_user(conn, email):
@@ -37,3 +38,10 @@ def verify_weekday_number(weekday_number):
         return False
     return weekday_number >= 0 and weekday_number <= 6
 
+def verify_togrute_id(conn, togrute_id):
+    return utils.get_togrute(conn, togrute_id) is not None
+
+def verify_togruteforekomst_exists(conn, dato, togrute_id):
+    c = conn.cursor()
+    c.execute("SELECT * FROM Togruteforekomst WHERE dato=? AND togrute_id=?", (dato, togrute_id))
+    return c.fetchone() is not None
