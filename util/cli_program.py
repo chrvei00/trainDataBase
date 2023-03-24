@@ -2,6 +2,7 @@ import util.database_functions as dbf
 import util.validation as val
 from termcolor import colored
 
+
 def start(conn):
     while True:
         print(colored("\n=========================================\n", "magenta"))
@@ -13,11 +14,10 @@ def start(conn):
         print("5. Vis dine fremtidige reiser")
         print("0. Avslutt")
 
-
         valg = int(input("\nVelg handling (0-5): "))
         print(colored("\n-----------------------------------------\n", "magenta"))
 
-        #Finn togruter for en stasjon på en ukedag
+        # Finn togruter for en stasjon på en ukedag
         if valg == 1:
             stasjon = input("Skriv inn stasjon: ")
             while not val.verify_stasjon(conn, stasjon):
@@ -29,7 +29,7 @@ def start(conn):
                 print(colored("Ugyldig ukedag. Prøv igjen.", "red"))
                 ukedag = input("Skriv inn en ukedag: ")
 
-            dbf.print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)            
+            dbf.print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)
         elif valg == 2:
             startstasjon = input("Skriv inn startstasjon: ")
             while not val.verify_stasjon(conn, startstasjon):
@@ -51,21 +51,22 @@ def start(conn):
                 print(colored("Ugyldig tid. Prøv igjen.", "red"))
                 tid = input("Skriv inn tid (HH:MM): ")
 
-            dbf.print_togruter_by_stasjoner_and_date(conn, startstasjon, endestasjon, dato, tid)
+            dbf.print_togruter_by_stasjoner_and_date(
+                conn, startstasjon, endestasjon, dato, tid)
 
-        #Registrer kunde
+        # Registrer kunde
         elif valg == 3:
             while True:
                 navn = input("Skriv inn navn: ")
                 epost = input("Skriv inn email: ")
                 mobilnummer = input("Skriv inn mobilnummer: ")
-                if(dbf.register_kunde(conn, navn, epost, mobilnummer)):
+                if (dbf.register_kunde(conn, navn, epost, mobilnummer)):
                     print(colored("\nKunde registrert.", 'green'))
                     break
                 else:
-                    if(input("\nVil du prøve igjen? y/n") == "n"):
+                    if (input("\nVil du prøve igjen? y/n") == "n"):
                         break
-                    
+
         elif valg == 4:
             email = input("Skriv inn email: ")
             while not val.verify_user(conn, email):
@@ -84,7 +85,7 @@ def start(conn):
             while not val.verify_stasjon(conn, endestasjon):
                 print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
                 endestasjon = input("Skriv inn endestasjon: ")
-            
+
             dato = input("Skriv inn dato (YYYY-MM-DD): ")
             while not val.verify_date_string(dato):
                 print(colored("Ugyldig dato. Prøv igjen.", "red"))
@@ -94,19 +95,23 @@ def start(conn):
                 break
 
             print(colored("\nVelg rute:", 'blue'))
-            togrute_id = input("\nSkriv inn id for ruten du vil kjøpe billettet til: ")
+            togrute_id = input(
+                "\nSkriv inn id for ruten du vil kjøpe billettet til: ")
             while not val.verify_togrute_id(conn, togrute_id):
                 print(colored("Ugyldig togrute_id. Prøv igjen.", "red"))
-                togrute_id = input("Skriv inn id for ruten du vil kjøpe billettet til: ")
-                
+                togrute_id = input(
+                    "Skriv inn id for ruten du vil kjøpe billettet til: ")
+
             dato = input("Skriv inn dato for toget du ønsker (YYYY-MM-DD): ")
             while not val.verify_date_string(dato) or not val.verify_togruteforekomst_exists(conn, dato, togrute_id):
                 print(colored("Ugyldig dato eller format. Prøv igjen.", "red"))
-                dato = input("Skriv inn dato for toget du ønsker (YYYY-MM-DD): ")
-            
+                dato = input(
+                    "Skriv inn dato for toget du ønsker (YYYY-MM-DD): ")
+
             first = True
             while True:
-                seats = dbf.print_available_seats(conn, togrute_id, dato, startstasjon, endestasjon)
+                seats = dbf.print_available_seats(
+                    conn, togrute_id, dato, startstasjon, endestasjon)
                 if not seats:
                     print(colored("Ingen ledige plasser på denne ruten. \n", "red"))
                     break
@@ -117,7 +122,8 @@ def start(conn):
                 if plass == "none":
                     break
                 while (not any([int(vogn) == seat[0] and int(plass) == seat[1] for seat in seats])):
-                    print(colored("Plassen er opptatt eller finnes ikke. Prøv igjen.", "red"))
+                    print(
+                        colored("Plassen er opptatt eller finnes ikke. Prøv igjen.", "red"))
                     vogn = input("\nSkriv inn vogn_nummer (eller none): ")
                     if vogn == "none":
                         break
@@ -126,11 +132,24 @@ def start(conn):
                         break
                 if (vogn == "none" or plass == "none"):
                     break
+
                 if first:
-                    ordre_nummer = dbf.create_ordre(conn, togrute_id, dato, email, startstasjon, endestasjon)
+                    ordre_nummer = dbf.create_ordre(
+                        conn, togrute_id, dato, email, startstasjon, endestasjon)
+
+                plass_type = next((seat[3] for seat in seats if int(
+                    vogn) == seat[0] and int(plass) == seat[1]))
+                if (plass_type == "sove"):
+                    adjacent_bed_number = 1 if (int(plass) % 2 == 1) else -1
+
+                    want_to_buy = input(
+                        "\nØnsker du å kjøpe den andre sengen i kupeén? (y/n)")
+                    if (want_to_buy == "y"):
+                        if not dbf.buy_billett(conn, togrute_id, vogn, str(int(plass) + adjacent_bed_number), ordre_nummer):
+                            break
                 if not dbf.buy_billett(conn, togrute_id, vogn, plass, ordre_nummer):
                     break
-                if(input("\nVil du kjøpe flere billeter? (y/n)") == "n"):
+                if (input("\nVil du kjøpe flere billeter? (y/n)") == "n"):
                     break
                 first = False
 
@@ -147,5 +166,5 @@ def start(conn):
             print(colored("Ugyldig valg. Prøv igjen.", "red"))
 
         print(colored("\n-----------------------------------------\n", "magenta"))
-        if(input("\nVil du utføre en ny handling? (y/n)") == "n"):
+        if (input("\nVil du utføre en ny handling? (y/n)") == "n"):
             break
