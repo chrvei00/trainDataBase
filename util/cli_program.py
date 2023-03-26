@@ -83,8 +83,11 @@ def søk_etter_togruter(conn):
         return
 
     endestasjon = input("Skriv inn endestasjon: ")
-    while not val.verify_stasjon(conn, endestasjon) and not endestasjon == "exit":
-        print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
+    while (not val.verify_stasjon(conn, endestasjon) or endestasjon == startstasjon) and not endestasjon == "exit":
+        if endestasjon == startstasjon:
+            print(colored("Startstasjon og endestasjon kan ikke være like. Prøv igjen.", "red"))
+        else:
+            print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
         endestasjon = input("Skriv inn endestasjon: ")
     if endestasjon == "exit":
         return
@@ -115,13 +118,16 @@ def register_kunde(conn):
         if epost == "exit":
             return
         mobilnummer = input("Skriv inn mobilnummer: ")
+        while not val.verify_phone_number(mobilnummer) and not mobilnummer == "exit":
+            print(colored("Ugyldig mobilnummer. Prøv igjen.", "red"))
+            mobilnummer = input("Skriv inn mobilnummer: ")
         if mobilnummer == "exit":
             return
         if (dbf.register_kunde(conn, navn, epost, mobilnummer)):
             print(colored("\nKunde registrert.", 'green'))
             return
         else:
-            if (input("\nVil du prøve igjen? y/n") == "n"):
+            if (input("\nVil du prøve igjen? y/n ") == "n"):
                 return
 
 def bestill_billetter(conn):
@@ -145,8 +151,11 @@ def bestill_billetter(conn):
         return
 
     endestasjon = input("Skriv inn endestasjon: ")
-    while not val.verify_stasjon(conn, endestasjon) and not endestasjon == "exit":
-        print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
+    while (not val.verify_stasjon(conn, endestasjon) or endestasjon == startstasjon) and not endestasjon == "exit":
+        if endestasjon == startstasjon:
+            print(colored("Startstasjon og endestasjon kan ikke være like. Prøv igjen.", "red"))
+        else:
+            print(colored("Ugyldig endestasjon. Prøv igjen.", "red"))
         endestasjon = input("Skriv inn endestasjon: ")
     if endestasjon == "exit":
         return
