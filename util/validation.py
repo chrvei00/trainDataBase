@@ -45,3 +45,6 @@ def verify_togruteforekomst_exists(conn, dato, togrute_id):
     c = conn.cursor()
     c.execute("SELECT * FROM Togruteforekomst WHERE dato=? AND togrute_id=?", (dato, togrute_id))
     return c.fetchone() is not None
+
+def verify_phone_number(mobilnummer):
+    return len(mobilnummer) == 8 and mobilnummer.isdigit()

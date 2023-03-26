@@ -62,7 +62,7 @@ def register_kunde(conn, navn, epost, mobilnummer):
         )
         conn.commit()
     except sqlite3.IntegrityError:
-        print(colored("\nKunden finnes allerede i databasen.", "red"))
+        print(colored("\nEmailen er allerede i bruk. Vennligst prøv igjen.", "red"))
         return False
     return True
 
@@ -120,21 +120,26 @@ def print_orders(conn, epost):
         c = conn.cursor()
         c.execute(
             """
-            SELECT ordre_nummer, kjop_datotid, togrute_id, togruteforekomst_dato, pastigningstasjon_navn, avstigningstasjon_navn, vogn_nummer, plass_nummer 
-            FROM Kunde NATURAL JOIN Kundeordre 
+            SELECT ordre_nummer, kjop_datotid, (date(togruteforekomst_dato, '+' || dager_etter_avgangsdato || ' days') || ' ' || avgang_tid) as new_date, pastigningstasjon_navn, avstigningstasjon_navn, vogn_nummer, plass_nummer
+            FROM Kunde
+            NATURAL JOIN Kundeordre 
             NATURAL JOIN Billett
-            WHERE epost = ? AND kjop_datotid > CURRENT_TIMESTAMP
+            JOIN Rute_tid
+                ON (Rute_tid.togrute_id = Kundeordre.togrute_id
+                AND jernbanestasjon_navn = pastigningstasjon_navn)
+            WHERE epost = ? AND new_date > CURRENT_TIMESTAMP
             """,
             (epost,)
         )
         orders =  c.fetchall()
-        df = pd.DataFrame(orders, columns=["Ordrenummer", "Kjopsdato", "Togrute_id", "Togrute_dato", "Til", "Fra", "Vognnummer", "Plassnummer"])
+        df = pd.DataFrame(orders, columns=["Ordrenummer", "Kjopsdato", "Avgangstid", "Fra", "Til", "Vognnummer", "Plassnummer"])
         if (orders == []):
             print(colored("Fant ingen bestillinger.", "red"))
             return False
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
         return True
-    except sqlite3.Error:
+    except sqlite3.Error as e:
+        print(e)
         print(colored("Klarer ikke å hente bestillinger.", "red"))
         return False
 
