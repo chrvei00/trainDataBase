@@ -134,7 +134,7 @@ def bestill_billetter(conn):
     email = input("Skriv inn email: ")
     if email == "exit":
         return
-    while not val.verify_user(conn, email):
+    while not val.verify_user(conn, email) and not email == "exit":
         print(colored("Kunde finnes ikke i systemet. \n", 'red'))
         email = input("Skriv inn email: ")
     if email == "exit":
