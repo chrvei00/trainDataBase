@@ -133,26 +133,27 @@ INSERT INTO
     Rute_tid (
         ankomst_tid,
         avgang_tid,
+        dager_etter_avgangsdato,
         togrute_id,
         jernbanestasjon_navn
     )
 VALUES
     -- Dagtog Trondheim Bodø 
-    ('07:39', '07:49', 1, 'Trondheim S'),
-    ('09:41', '09:51', 1, 'Steinkjer'),
-    ('13:10', '13:20', 1, 'Mosjøen'),
-    ('14:21', '14:31', 1, 'Mo i Rana'),
-    ('16:39', '16:49', 1, 'Fauske'),
-    ('17:24', '17:34', 1, 'Bodø'),
+    ('07:39', '07:49', 0, 1, 'Trondheim S'),
+    ('09:41', '09:51', 0, 1, 'Steinkjer'),
+    ('13:10', '13:20', 0, 1, 'Mosjøen'),
+    ('14:21', '14:31', 0, 1, 'Mo i Rana'),
+    ('16:39', '16:49', 0, 1, 'Fauske'),
+    ('17:24', '17:34', 0, 1, 'Bodø'),
     -- Nattog Trondheim Bodø
-    ('22:55', '23:05', 2, 'Trondheim S'),
-    ('00:47', '00:57', 2, 'Steinkjer'),
-    ('04:31', '04:41', 2, 'Mosjøen'),
-    ('05:45', '05:55', 2, 'Mo i Rana'),
-    ('08:09', '08:19', 2, 'Fauske'),
-    ('08:55', '09:05', 2, 'Bodø'),
+    ('22:55', '23:05', 0, 2, 'Trondheim S'),
+    ('00:47', '00:57', 1, 2, 'Steinkjer'),
+    ('04:31', '04:41', 1, 2, 'Mosjøen'),
+    ('05:45', '05:55', 1, 2, 'Mo i Rana'),
+    ('08:09', '08:19', 1, 2, 'Fauske'),
+    ('08:55', '09:05', 1, 2, 'Bodø'),
     -- Morgentog Mo i Rana Trondheim
-    ('08:01', '08:11', 3, 'Mo i Rana'),
-    ('09:04', '09:14', 3, 'Mosjøen'),
-    ('12:21', '12:31', 3, 'Steinkjer'),
-    ('14:03', '14:13', 3, 'Trondheim S');
+    ('08:01', '08:11', 0, 3, 'Mo i Rana'),
+    ('09:04', '09:14', 0, 3, 'Mosjøen'),
+    ('12:21', '12:31', 0, 3, 'Steinkjer'),
+    ('14:03', '14:13', 0, 3, 'Trondheim S');

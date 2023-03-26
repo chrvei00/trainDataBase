@@ -79,6 +79,7 @@ CREATE TABLE
     Rute_tid (
         ankomst_tid TIME NOT NULL,
         avgang_tid TIME NOT NULL,
+        dager_etter_avgangsdato INTEGER NOT NULL,
         togrute_id INTEGER NOT NULL,
         jernbanestasjon_navn TEXT NOT NULL,
         FOREIGN KEY (togrute_id) REFERENCES Togrute (togrute_id) ON UPDATE CASCADE ON DELETE CASCADE,

@@ -140,12 +140,13 @@ INSERT INTO
     Rute_tid (
         ankomst_tid,
         avgang_tid,
+        dager_etter_avgangsdato,
         togrute_id,
         jernbanestasjon_navn
     )
 VALUES
-    ('08:00', '08:15', 1, 'Oslo S'),
-    ('09:30', '09:45', 1, 'Drammen stasjon');
+    ('08:00', '08:15', 0, 1, 'Oslo S'),
+    ('09:30', '09:45', 0, 1, 'Drammen stasjon');
 
 /* Test Vognoppsett */
 INSERT INTO

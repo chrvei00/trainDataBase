@@ -71,18 +71,31 @@ def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
         print(colored(f"\nHenter togruter for stasjon {stasjon} på {utils.number_to_day(int(ukedag))}...\n", "blue"))
     try:
         c = conn.cursor()
-        c.execute("""
-            SELECT togrute_id, dato, startstasjon, endestasjon, togrute_navn, banestrekning_navn
-            FROM Togrute
-            NATURAL JOIN Togruteforekomst
-            WHERE strftime('%w', dato) = ?
-        """, (str(ukedag),))
-        togruter = c.fetchall()
+        togruter = utils.get_all_togruter(conn)
 
-        paths = [(utils.get_path(conn, x[2], x[3], x[5]), i) for i, x in enumerate(togruter)]
+        paths = [(utils.get_path(conn, x[1], x[2], x[3]), i) for i, x in enumerate(togruter)]
         paths = list(filter(lambda x: any([y[0] == stasjon or y[1] == stasjon for y in x[0]]), paths))
+        togruter_ids = [togruter[x[1]][0] for x in paths]
 
-        togruter = [togruter[x[1]] for x in paths]
+        togruter = []
+        for x in togruter_ids:
+            c.execute(
+            """
+            SELECT togrute_id, startstasjon, endestasjon, togrute_navn, banestrekning_navn
+            FROM Togrute
+            NATURAL JOIN (
+                SELECT date(dato, '+' || dager_etter_avgangsdato || ' days') as new_date, togrute_id
+                FROM Togruteforekomst
+                NATURAL JOIN Rute_tid
+                WHERE jernbanestasjon_navn = ?
+                )
+            WHERE togrute_id = ?
+                AND strftime('%w', new_date) = ?
+            """, (stasjon, x, ukedag))
+            
+            rute = c.fetchone()
+            if rute:
+                togruter.append(rute)
 
         return list(togruter)
     except sqlite3.IntegrityError as e:
@@ -90,14 +103,14 @@ def get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
 
 def print_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag):
     if val.verify_weekday_string(ukedag):
-        ukedag = utils.get_weekday_number(ukedag)
+        ukedag = str(utils.get_weekday_number(ukedag))
     try:
         togruter = get_togruter_by_stasjon_and_ukedag(conn, stasjon, ukedag)
-        togruter = list(map(lambda x: (x[0], x[2], x[3], x[4], x[5]), togruter))
+        togruter = list(map(lambda x: (x[0], x[1], x[2], x[3], x[4]), togruter))
         if togruter == []:
             print(colored(f"Fant ingen togruter for stasjon {stasjon} på {utils.number_to_day(int(ukedag))}.", "red"))
             return
-        df = pd.DataFrame(togruter, columns=["id", "Startstasjon", "Endestasjon", "Togrutenavn", "Banestrekningnavn"])
+        df = pd.DataFrame(togruter, columns=["id", "Startstasjon", "Endestasjon", "Togrute", "Banestrekningnavn"])
         print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
     except sqlite3.IntegrityError as e:
         print(colored("Noe gikk galt ved henting av togruter:", "red"))
