@@ -1,5 +1,3 @@
-import pandas as pd
-from tabulate import tabulate
 import datetime
 import util.validation as val
 
@@ -73,10 +71,16 @@ def get_togrute(conn, togrute_id):
     cursor.execute(query, (togrute_id,))
     return cursor.fetchone()
 
+def get_all_togruter(conn):
+    cursor = conn.cursor()
+    query = "SELECT togrute_id, startstasjon, endestasjon, banestrekning_navn FROM Togrute"
+    cursor.execute(query)
+    return cursor.fetchall()
+
 def number_to_day(num):
     if num < 0 or num > 6:
         return None
-    return ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"][num]
+    return ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"][num]
 
 def get_all_seats(conn, togrute_id, date):
     cursor = conn.cursor()
@@ -122,6 +126,7 @@ def is_overlapping_routes(conn, start1, end1, start2, end2, banestrekning):
 def get_overlapping_kundeordre(conn, togrute_id, date, startstasjon, endestasjon):
     kundeordrer = get_kunde_ordre_by_togruteforekomst(conn, togrute_id, date)
     new_kundeordrer = []
+
     for kundeordre in kundeordrer:
         if kundeordre[4] == "sitte": continue
 
@@ -187,7 +192,7 @@ def compareDates(date_time, input_date, input_time):
 
 
 def get_weekday_number(weekday_string):
-    weekdays = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+    weekdays = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"]
     return weekdays.index(weekday_string)
 
 def get_next_ordre_nummer(conn):

@@ -21,6 +21,9 @@ def create_connection(database):
         print(e)
     return conn
 
+#Brukerhistorie a
+#Brukerhistorie b
+#Brukerhistorie f
 def insert_defaultvalues(conn, script_path):
     try:
         with open(script_path, 'r') as f:
